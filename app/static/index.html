@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation - OpenAI Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        .endpoint {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .get {
+            background-color: #28a745;
+        }
+
+        .post {
+            background-color: #007bff;
+        }
+
+        .path {
+            font-family: monospace;
+            font-size: 1.1em;
+            color: #6c757d;
+        }
+
+        .description {
+            margin: 15px 0;
+        }
+
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        code {
+            font-family: monospace;
+        }
+
+        .try-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .try-button:hover {
+            background-color: #0056b3;
+        }
+
+        .note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>OpenAI Chat API</h1>
+        <p>API para interação em tempo real com o ChatGPT usando Server-Sent Events (SSE)</p>
+        <a href="/chat" class="try-button">Acessar Interface do Chat</a>
+    </div>
+
+    <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/chat</span>
+        <div class="description">
+            <p>Interface web para interação com o chat em tempo real.</p>
+        </div>
+        <div class="note">
+            Interface amigável para testar a API com respostas em streaming.
+        </div>
+    </div>
+
+    <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/chat-stream?prompt={texto}</span>
+        <div class="description">
+            <p>Endpoint SSE para streaming de respostas do ChatGPT.</p>
+            <h4>Parâmetros Query:</h4>
+            <ul>
+                <li><code>prompt</code> (string, obrigatório): Texto da mensagem para o ChatGPT</li>
+            </ul>
+            <h4>Exemplo de Uso com JavaScript:</h4>
+            <pre><code>const eventSource = new EventSource('/chat-stream?prompt=Olá, como vai?');
+
+eventSource.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === 'message') {
+        console.log(data.content);
+    }
+};
+
+eventSource.onerror = () => {
+    eventSource.close();
+};</code></pre>
+        </div>
+        <div class="note">
+            As respostas são enviadas em chunks usando Server-Sent Events (SSE).
+            Cada chunk contém um objeto JSON com as propriedades <code>type</code> e <code>content</code>.
+        </div>
+    </div>
+
+    <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/docs</span>
+        <div class="description">
+            <p>Documentação Swagger UI da API.</p>
+        </div>
+        <a href="/docs" class="try-button">Acessar Swagger UI</a>
+    </div>
+
+    <div class="endpoint">
+        <span class="method get">GET</span>
+        <span class="path">/redoc</span>
+        <div class="description">
+            <p>Documentação ReDoc da API.</p>
+        </div>
+        <a href="/redoc" class="try-button">Acessar ReDoc</a>
+    </div>
+</body>
+</html>

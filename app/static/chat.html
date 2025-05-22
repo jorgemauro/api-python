@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat com OpenAI</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #chat-container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 300px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        #prompt-input {
+            width: 80%;
+            padding: 10px;
+            margin-right: 10px;
+        }
+        #send-button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #send-button:disabled {
+            background-color: #ccc;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background-color: #e9ecef;
+        }
+        .ai-message {
+            background-color: #f8f9fa;
+        }
+        .back-button {
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 5px;
+        }
+        #debug-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-button">Voltar para Documentação</a>
+    <h1>Chat com OpenAI</h1>
+    <div id="chat-container"></div>
+    <div>
+        <input type="text" id="prompt-input" placeholder="Digite sua mensagem...">
+        <button id="send-button">Enviar</button>
+    </div>
+    <div id="debug-info"></div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const promptInput = document.getElementById('prompt-input');
+        const sendButton = document.getElementById('send-button');
+        const debugInfo = document.getElementById('debug-info');
+        let currentResponse = '';
+        let currentEventSource = null;
+
+        function debug(message) {
+            console.log(message);
+            debugInfo.style.display = 'block';
+            debugInfo.innerHTML += `<div>${new Date().toISOString()}: ${message}</div>`;
+        }
+
+        function addMessage(content, isUser = false) {
+            debug(`Adicionando mensagem: ${content.substring(0, 50)}...`);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+            messageDiv.textContent = content;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function setLoading(loading) {
+            sendButton.disabled = loading;
+            promptInput.disabled = loading;
+            sendButton.textContent = loading ? 'Aguarde...' : 'Enviar';
+            debug(`Estado de loading: ${loading}`);
+        }
+
+        function closeEventSource() {
+            if (currentEventSource) {
+                debug('Fechando EventSource anterior');
+                currentEventSource.close();
+                currentEventSource = null;
+            }
+        }
+
+        async function sendMessage() {
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
+
+            debug(`Enviando mensagem: ${prompt}`);
+            setLoading(true);
+            addMessage(prompt, true);
+            promptInput.value = '';
+            currentResponse = '';
+
+            // Fecha qualquer conexão SSE anterior
+            closeEventSource();
+
+            try {
+                currentEventSource = new EventSource(`/chat-stream?prompt=${encodeURIComponent(prompt)}`);
+                
+                currentEventSource.onopen = (event) => {
+                    debug('Conexão SSE estabelecida');
+                };
+
+                currentEventSource.onmessage = (event) => {
+                    debug(`Recebido evento: ${event.data}`);
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'message') {
+                            if (!currentResponse) {
+                                addMessage(''); // Cria uma nova mensagem vazia
+                            }
+                            currentResponse += data.content;
+                            const aiMessages = chatContainer.getElementsByClassName('ai-message');
+                            if (aiMessages.length > 0) {
+                                aiMessages[aiMessages.length - 1].textContent = currentResponse;
+                            }
+                        } else if (data.type === 'error') {
+                            debug(`Erro recebido: ${data.error}`);
+                            addMessage(`Erro: ${data.error}`);
+                            closeEventSource();
+                        }
+                    } catch (error) {
+                        debug(`Erro ao processar mensagem: ${error}`);
+                    }
+                };
+
+                currentEventSource.onerror = (error) => {
+                    debug(`Erro na conexão SSE: ${error.type}`);
+                    closeEventSource();
+                    setLoading(false);
+                };
+
+            } catch (error) {
+                debug(`Erro ao criar EventSource: ${error}`);
+                addMessage(`Erro ao conectar: ${error.message}`);
+                setLoading(false);
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        promptInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Limpa conexões ao fechar/recarregar a página
+        window.addEventListener('beforeunload', closeEventSource);
+    </script>
+</body>
+</html> 
