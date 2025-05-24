@@ -1,78 +1,153 @@
-# API de Chat com OpenAI (SSE)
+# API Python Chat
 
-Esta é uma API construída com FastAPI que permite interagir com o modelo GPT da OpenAI em tempo real usando Server-Sent Events (SSE).
+Backend em Python usando FastAPI para integração com a OpenAI e gerenciamento de streaming em tempo real.
 
-## Requisitos
+## 🚀 Início Rápido
 
-- Python 3.8+
-- Chave de API da OpenAI
+1. **Configure o ambiente virtual**
+```bash
+# Crie o ambiente virtual
+python -m venv venv
 
-## Configuração
+# Ative o ambiente virtual
+# Linux/Mac:
+source venv/bin/activate
+# Windows:
+.\venv\Scripts\activate
+```
 
-1. Clone o repositório
-2. Instale as dependências:
+2. **Instale as dependências**
 ```bash
 pip install -r requirements.txt
 ```
-3. Crie um arquivo `.env` na raiz do projeto e adicione sua chave da API:
-```
+
+3. **Configure o ambiente**
+Crie um arquivo `.env` na raiz do projeto:
+```env
+PORT=8000
 OPENAI_API_KEY=sua_chave_api_aqui
 ```
 
-## Executando a API
-
-Para iniciar o servidor:
-
+4. **Inicie o servidor**
 ```bash
-uvicorn app.main:app --reload
+# Desenvolvimento
+uvicorn main:app --reload
+
+# Produção
+uvicorn main:app
 ```
 
-A API estará disponível em `http://localhost:8000`
+## 📁 Estrutura
 
-## Interface Web
-
-Ao acessar `http://localhost:8000`, você encontrará uma interface web amigável para interagir com o chat. A interface permite:
-
-- Enviar mensagens para o ChatGPT
-- Ver as respostas em tempo real (streaming)
-- Histórico de mensagens na sessão atual
-
-## Endpoints
-
-### GET /
-Retorna a interface web do chat
-
-### GET /chat-stream
-Endpoint SSE para streaming de respostas do ChatGPT.
-
-Parâmetros de query:
-- `prompt`: A mensagem a ser enviada para o ChatGPT
-
-Exemplo de uso com JavaScript:
-```javascript
-const eventSource = new EventSource(`/chat-stream?prompt=Olá, como vai?`);
-
-eventSource.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    if (data.type === 'message') {
-        console.log(data.content);
-    }
-};
-
-eventSource.onerror = () => {
-    eventSource.close();
-};
+```
+api-python-chat/
+├── app/
+│   ├── routes/
+│   │   └── chat.py      # Rotas do chat
+│   │   └── openai.py    # Serviço OpenAI
+│   └── config.py        # Configurações
+├── main.py              # Aplicação FastAPI
+└── requirements.txt     # Dependências
 ```
 
-## Documentação da API
+## 🔌 API
 
-Após iniciar o servidor, você pode acessar:
-- Documentação Swagger UI: `http://localhost:8000/docs`
-- Documentação ReDoc: `http://localhost:8000/redoc`
+### POST /chat
+Endpoint para envio de mensagens ao chat.
 
-## Características
+**Request:**
+```json
+{
+  "prompt": "string",    // Mensagem do usuário
+  "userId": "string",    // ID do usuário (opcional)
+  "userName": "string"   // Nome do usuário (opcional)
+}
+```
 
-- Streaming de respostas em tempo real usando SSE
-- Interface web responsiva
-- Tratamento de erros robusto
-- Documentação automática via Swagger/ReDoc 
+**Response:**
+Stream de eventos (SSE) com o seguinte formato:
+```
+data: [chunk de resposta]
+...
+event: done
+```
+
+## ⚙️ Configuração
+
+### Variáveis de Ambiente
+- `PORT`: Porta do servidor (default: 8000)
+- `OPENAI_API_KEY`: Chave de API da OpenAI
+
+### CORS
+Por padrão, o CORS está configurado para aceitar requisições de qualquer origem em desenvolvimento.
+Para produção, configure as origens permitidas no arquivo `main.py`.
+
+## 🔍 Logs
+O servidor registra logs para:
+- Requisições recebidas
+- Respostas da OpenAI
+- Erros e exceções
+
+## 🔒 Segurança
+- Validação de entrada usando Pydantic
+- Sanitização de dados
+- Proteção da chave da API
+- Configuração de CORS
+
+## 📝 Dependências Principais
+
+- FastAPI: Framework web moderno e rápido
+- uvicorn: Servidor ASGI para Python
+- python-dotenv: Gerenciamento de variáveis de ambiente
+- openai: SDK oficial da OpenAI
+- pydantic: Validação de dados
+
+## 🔧 Desenvolvimento
+
+### Instalando novas dependências
+```bash
+pip install nome-do-pacote
+pip freeze > requirements.txt
+```
+
+### Testes
+```bash
+# Instale o pytest
+pip install pytest
+
+# Execute os testes
+pytest
+```
+
+### Documentação da API
+Após iniciar o servidor, acesse:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## 📦 Deploy
+
+1. **Prepare o ambiente**
+```bash
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+2. **Configure as variáveis de ambiente**
+```bash
+export PORT=8000
+export OPENAI_API_KEY=sua_chave_api_aqui
+```
+
+3. **Inicie o servidor**
+```bash
+uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+## ⚠️ Tratamento de Erros
+
+O sistema inclui tratamento para:
+- Erros de validação de entrada
+- Falhas na API da OpenAI
+- Timeouts de conexão
+- Erros de streaming 
